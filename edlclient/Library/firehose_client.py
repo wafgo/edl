@@ -940,18 +940,18 @@ class firehose_client(metaclass=LogBase):
                                     self.error("%s doesn't exist!" % filename)
                                     continue
                                 partition_number = int(elem.get("physical_partition_number"))
-                                num_disk_sectors = self.firehose.getlunsize(partition_number)
+                                # num_disk_sectors = self.firehose.getlunsize(partition_number)
                                 start_sector = elem.get("start_sector")
-                                if "NUM_DISK_SECTORS" in start_sector:
-                                    start_sector = start_sector.replace("NUM_DISK_SECTORS", str(num_disk_sectors))
-                                if "-" in start_sector or "*" in start_sector or "/" in start_sector or \
-                                        "+" in start_sector:
-                                    start_sector = start_sector.replace(".", "")
-                                    start_sector = eval(start_sector)
+                                # if "NUM_DISK_SECTORS" in start_sector:
+                                #     start_sector = start_sector.replace("NUM_DISK_SECTORS", str(num_disk_sectors))
+                                # if "-" in start_sector or "*" in start_sector or "/" in start_sector or \
+                                #         "+" in start_sector:
+                                #     start_sector = start_sector.replace(".", "")
+                                #     start_sector = eval(start_sector)
                                 self.info(f"[qfil] programming {filename} to partition({partition_number})" +
                                           f"@sector({start_sector})...")
 
-                                self.firehose.cmd_program(int(partition_number), int(start_sector), filename)
+                                self.firehose.cmd_program(int(partition_number), start_sector, filename)
                 else:
                     self.warning(f"File : {filename} not found.")
             self.info("[qfil] raw programming ok.")
@@ -976,7 +976,12 @@ class firehose_client(metaclass=LogBase):
                             CMD = "<?xml version=\"1.0\" ?><data>\n {content} </data>".format(
                                 content=content)
                             print(CMD)
-                            self.firehose.xmlsend(CMD)
+                            rsp = self.firehose.xmlsend(CMD)
+                            if rsp.resp:
+                                self.info(f"Patch:\n--------------------\n")
+                                self.info(rsp.data)
+                            else:
+                                self.error(f"Error:{rsp.error}")
                 else:
                     self.warning(f"File : {filename} not found.")
             self.info("[qfil] patching ok")
